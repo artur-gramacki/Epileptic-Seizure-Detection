@@ -1,0 +1,24 @@
+########################################################
+expert_A_1sec_1chunk_64Hz_fold_0.png
+
+
+                  pred: seizure  pred: no seizure
+true: seizure                52                23
+true: no seizure             41                41
+
+
+Accuracy:  59.24%
+Precision: 0.5591
+Recall:    0.6933
+F-measure: 0.619
+
+
+expert_A_1sec_1chunk_64Hz
+--------------------------------------------------------
+ --Average accuracy for all folds: 59.24%
+ --Average precision for all folds: 0.5591
+ --Average recall for all folds: 0.6933
+ --Average F_measure for all folds: 0.619
+
+
+Total computation time: 0m 1s

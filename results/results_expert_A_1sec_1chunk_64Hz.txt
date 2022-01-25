@@ -1,0 +1,33 @@
+########################################################
+# expert_A_1sec_1chunk_64Hz.hdf5
+########################################################
+Input matrix dims: (49984, 20)
+x: (781, 64, 18)
+y: (781,)
+x_train_cv: (499, 64, 18) 
+x_validate_cv: (125, 64, 18) 
+x_test: (157, 64, 18)
+y_train_cv: (499,) 
+y_validate_cv: (125,) 
+y_test: (157,)
+
+
+
+Fold:  0
+Time: 1m 27s
+['GPU 0: Tesla T4 (UUID: GPU-d69781c0-f78f-f6dc-b3d6-b12e68f350f6)']
+best_model_expert_A_1sec_1chunk_64Hz_fold_0.hdf5
+--Best model validation accuracy: 69.60%
+--Best model test accuracy: 59.24%
+Confusion matrix:
+                  pred: seizure  pred: no seizure
+true: seizure                52                23
+true: no seizure             41                41
+Precision: 0.56
+Recall: 0.69
+F-measure: 0.62
+
+--Best models AVARAGE validation accuracy: 69.60%
+--Best models AVARAGE test accuracy: 59.24%
+
+
