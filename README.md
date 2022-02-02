@@ -1,5 +1,7 @@
 # A Deep Learning Framework for Epileptic Seizure Detection based on Neonatal EEG Signals
 
+Artur Gramacki & Jarosław Gramacki
+
 A version that only calculates one selected case `expert_A_1sec_1chunk_64Hz_fold_0`. 
 Can be used to test codes quickly. Just execute `EEG_neonatal.ipynb` Jupyter notebook. 
 In the `../working/inputs` dir `expert_A_1sec_1chunk_64Hz.hdf5` file has been uploaded, so
