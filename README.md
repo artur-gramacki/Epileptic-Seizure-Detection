@@ -15,7 +15,7 @@ In the [working/inputs/illustrative_files](working/inputs/illustrative_files) di
 `expert_A_1sec_1chunk_64Hz.hdf5` file (just for your information, txt files are not 
 used during calculations).
 
-The HDF5 files generated in Step 5 (see ‘Replication of the results’ Section) are very large, 
+The HDF5 files generated in Step 5 (see *Replication of the results* section) are very large, 
 as much as 16.6GB. Therefore these files have been made available in separate zip archives.
 See [working_inputs_dir.txt](working_inputs_dir.txt) file.
 
