@@ -4,7 +4,7 @@
 
 A version that only calculates one selected case `expert_A_1sec_1chunk_64Hz_fold_0`. 
 Can be used to test codes quickly. Just execute `EEG_neonatal.ipynb` Jupyter notebook. 
-In the `working/inputs` dir `expert_A_1sec_1chunk_64Hz.hdf5` file has been uploaded, so
+In the [working/inputs](working/inputs) dir `expert_A_1sec_1chunk_64Hz.hdf5` file has been uploaded, so
 Jupyter notebook can work properly.
 
 If you want to calculated other cases, HDF5 files must be generated and uploaded to
