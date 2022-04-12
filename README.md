@@ -18,3 +18,4 @@ Then start by:
 1. Reading a short tutorial in `R/Tutorial_on_how_to_run_R_codes.html`
 2. Become familiar with the contents of the `Python/EEG_neonatal.ipynb` Jupyter notebook
 
+In case of problems, the authors declare the necessary help for potential researchers.
