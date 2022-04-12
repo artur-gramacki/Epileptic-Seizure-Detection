@@ -19,5 +19,5 @@ The HDF5 files generated in Step 5 (see *Replication of the results* section) ar
 as much as 16.6GB. Therefore these files have been made available in separate zip archives.
 See [working_inputs_dir.txt](working_inputs_dir.txt) file.
 
-: https://github.com/artur-gramacki/Epileptic-Seizure-Detection
+: https://drive.google.com/file/d/1Nj6a8on-3hHwVWTyl5gJRtPDZFtfp23X/view?usp=sharing
 
