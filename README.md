@@ -1,6 +1,8 @@
 This is the Electronic Supplements for the paper
 **A Deep Learning Framework for Epileptic Seizure Detection based on Neonatal EEG Signals**
-by Artur Gramacki and Jarosław Gramacki
+
+*Artur Gramacki & Jarosław Gramacki*
+
 Emails:  a.gramacki@issi.uz.zgora.pl, j.gramacki@ck.uz.zgora.pl
 
 
