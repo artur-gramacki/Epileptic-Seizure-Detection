@@ -1,6 +1,6 @@
 This is the Electronic Supplements for the paper:
 
-**A Deep Learning Framework for Epileptic Seizure Detection based on Neonatal EEG Signals**
+> ## A Deep Learning Framework for Epileptic Seizure Detection based on Neonatal EEG Signals ##
 
 by *Artur Gramacki & Jarosław Gramacki*
 
