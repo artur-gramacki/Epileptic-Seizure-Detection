@@ -4,7 +4,7 @@ This is the Electronic Supplements for the paper
 
 by *Artur Gramacki & Jarosław Gramacki*
 
-Emails:  a.gramacki@issi.uz.zgora.pl, j.gramacki@ck.uz.zgora.pl
+e-mails:  a.gramacki@issi.uz.zgora.pl, j.gramacki@ck.uz.zgora.pl
 
 Paper details: available soon
 
