@@ -6,7 +6,7 @@ by *Artur Gramacki & Jarosław Gramacki*
 
 e-mails:  a.gramacki@issi.uz.zgora.pl, j.gramacki@ck.uz.zgora.pl
 
-Paper details: [to be available soon]
+Paper details: [waiting for decision]
 
 A complete repository consists of:
 1. R and Python source files and complete output results obtained by the authors available at https://drive.google.com/file/d/1FwgR8GjZLwE3z8d36vL7XDAqloVtHgJa/view?usp=sharing (size about 770MB)
