@@ -22,6 +22,6 @@ Then start by:
 
 - Two `HDF5` files (`working\inputs\expert_A_1sec_1chunk_64Hz.hdf5` and `working\inputs\expert_CC_10sec_20chunk_64Hz.hdf5`) are required and the files are already uploaded at the repository mentioned above. 
 
-- Then you can safely run all the code cells (`Ctrl+F9` in Google Colab).
+- Then you can safely run all the code cells (`Ctrl+F9` in [Google Colab](https://colab.research.google.com).
 
 In case of problems, the authors declare the necessary help for potential researchers.
