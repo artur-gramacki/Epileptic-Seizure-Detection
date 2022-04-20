@@ -16,6 +16,6 @@ Download the repository and save all the files on your local or cloud-based disk
 
 Then start by:
 1. Reading a short tutorial in `R/Tutorial_on_how_to_run_R_codes.html`
-2. Become familiar with the contents of the `Python/EEG_neonatal.ipynb` Jupyter notebook
+2. Become familiar with the contents of the `Python/EEG_neonatal.ipynb` Jupyter notebook. To familiarize yourself with this notebook, we suggest that you first run it with the `COMPLETE_CALCULATIONS` global variable set to `False`. Leave the other variables unchanged. Two `HDF5` files (`working\inputs\expert_A_1sec_1chunk_64Hz.hdf5` and `working\inputs\expert_CC_10sec_20chunk_64Hz.hdf5`) are required and the files are already uploaded at the repository mentioned above. Then you can safely run all the code cells (Ctrl+F9 in Google Colab).
 
 In case of problems, the authors declare the necessary help for potential researchers.
