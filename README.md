@@ -19,7 +19,7 @@ Then start by:
 2. Become familiar with the contents of the `Python/EEG_neonatal.ipynb` Jupyter notebook. 
 
 Notes:
-- To familiarize yourself with this notebook, we suggest that you first run it with the `COMPLETE_CALCULATIONS` global variable set to `False`. Leave the other global variables unchanged. 
+- To familiarize yourself with the `Python/EEG_neonatal.ipynb` notebook, we suggest that you first run it with the `COMPLETE_CALCULATIONS` global variable set to `False`. Leave the other global variables unchanged. 
 
 - If you are working in [Google Colab](https://colab.research.google.com) set `GOOGLE_COLAB` global variable to `True`, otherwise set it to `False`. If `GOOGLE_COLAB = True` set also a correct value for `MOUNT_POINT` global variable.
 
