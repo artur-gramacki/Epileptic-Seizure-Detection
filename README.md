@@ -23,7 +23,7 @@ Notes:
 
 - If you are working in [Google Colab](https://colab.research.google.com) set `GOOGLE_COLAB` global variable to `True`, otherwise set it to `False`. If `GOOGLE_COLAB = True` set also a correct value for `MOUNT_POINT` global variable.
 
-- Two `HDF5` files (`working\inputs\expert_A_1sec_1chunk_64Hz.hdf5` and `working\inputs\expert_CC_10sec_20chunk_64Hz.hdf5`) are required and the files are already uploaded at the repository mentioned above. 
+- If `COMPLETE_CALCULATIONS = False` only two `HDF5` files (`working\inputs\expert_A_1sec_1chunk_64Hz.hdf5` and `working\inputs\expert_CC_10sec_20chunk_64Hz.hdf5`) are required and the files are already uploaded at the repository mentioned above. If `COMPLETE_CALCULATIONS = True` all 90 HDF5 files must be loaded into the `working/inputs/` directory.
 
 - Then you can safely run all the code cells (`Ctrl+F9` in [Google Colab](https://colab.research.google.com)).
 
