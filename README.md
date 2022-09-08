@@ -16,7 +16,7 @@ Download the repository and save all the files on your local or cloud-based disk
 
 Then start by:
 1. Reading a short tutorial in `R/Tutorial_on_how_to_run_R_codes.html`
-2. Become familiar with the contents of the `Python/EEG_neonatal.ipynb` Jupyter notebook. 
+2. Become familiar with the contents of the [Python/EEG_neonatal.ipynb](https://github.com/artur-gramacki/Epileptic-Seizure-Detection/blob/main/EEG_neonatal.ipynb) Jupyter notebook. 
 
 Notes:
 - To familiarize yourself with the `Python/EEG_neonatal.ipynb` notebook, we suggest that you first run it with the `COMPLETE_CALCULATIONS` global variable set to `False`. Leave the other global variables unchanged. 
