@@ -1,0 +1,567 @@
+---
+title: "Supplementary materials in conjunction with the paper **A Deep Learning Framework for Epileptic Seizure Detection based on Neonatal EEG Signals**"
+author: "Artur Gramacki & Jarosław Gramacki"
+date: "10-04-2022"  
+output:
+  html_document: default
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r, setup, include = FALSE}
+# If a certain option needs to be frequently set to a value in multiple code chunks, 
+# you can consider setting it globally in the first code chunk of your document, e.g.,
+knitr::opts_chunk$set(
+  tidy = TRUE,
+  highlight = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  cache = FALSE
+)
+```
+
+---
+# Make the pre blocks scroll horizontally if it overflows.
+# https://stackoverflow.com/questions/36845178/width-of-r-code-chunk-output-in-rmarkdown-files-knitr-ed-to-html/43084223
+---
+
+<style>
+pre {
+  overflow-x: auto;
+}
+
+pre code {
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+# Introduction
+This report may be seen as a supplement to the *Replication of the results* Section in the paper (steps 1-5). It was generated using **Knitr** (https://en.wikipedia.org/wiki/Knitr), an engine for dynamic report generation with R. You can regenerate this HTML file at any time by running `tutorial_on_how_to_run_R_codes.Rmd` script in RStudio (https://www.rstudio.com).
+
+# R version used
+
+All the R codes have been tested in R version **4.1.2**. Most likely, however, they can also be launched in other **4.x.x** versions of R. The R version during generating this report is:
+
+```{r}
+R.version.string
+```
+
+# Preliminary remarks, required packages
+
+We strongly recommend using **RStudio** program to work with R (https://www.rstudio.com). Before running our codes, three required packages **must be installed manually**, i.e. `edf`, `png` and `rhdf5`. In order to install the first two use menu **Tools-->Install Packages** in RStudio. Type the name of the package and press Install button. The third package is available at https://bioconductor.org and to install this package start R (version not older than **4.x.x**) and enter: 
+
+```{r results = "hide"}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+pkgs <- c("edf", "png")
+to_install = !pkgs %in% installed.packages()
+if(any(to_install)) {
+  install.packages(pkgs[to_install])
+}
+
+pkg <- c("rhdf5")
+to_install = !pkg %in% installed.packages()
+if(to_install) {
+  BiocManager::install("rhdf5")
+}
+```
+
+After installing the two packages **load** them using the following commands: 
+
+```{r results = "hide"}
+library(edf)
+library(png)
+library(rhdf5)
+```
+
+# Next steps to be performed
+
+**1. Set directory structure**
+
+Be sure that you have the following directory structure on your disk and that **`R` directory is the current working one**. 
+
+```{r}
+#   |---annotations
+#   |---edf
+#   |---Python
+#   |---R               <-- this MUST be set as your working directory 
+#       |---test_files
+#   |---working
+#       |---acc_loss
+#       |---best_models
+#       |---hists
+#       |---inputs
+#       |---logs
+#       |---results    
+#       |---ROC
+#       |---waveforms
+```
+
+To check your working directory, execute the following function:
+
+```{r}
+getwd()
+```
+
+**2. Download the dataset of neonatal EEG recordings**
+
+These are available at https://zenodo.org/record/4940267. There are 79 EDF files and 3 CSV annotations files. The EDF files are approximately 4GB in size.
+
+**3. Upload the dataset**
+
+Upload 79 EDF files and 3 CSV files to the `edf` and `annotations` directories respectively. Check their content. Must be as below:
+
+```{r}
+list.files('../edf')
+```
+
+```{r}
+list.files('../annotations')
+```
+
+**4. Set required variables**
+
+```{r}
+# Symbols of human experts.
+we <- c( "A", "B", "C")
+
+# Annotations file names, as downloaded from https://zenodo.org/record/4940267
+ann.f <- c("annotations_2017_A_fixed.csv",
+           "annotations_2017_B.csv",
+           "annotations_2017_C.csv")
+
+# Infant IDs which have seizures annotated by all 3 experts
+s.IDs <- c(1,4,5,7,9,11,13,14,15,16,17,19,20,21,22,25,31,34,36,38,39,40,41,44,47,50,51,52,62,63,66,67,69,71,73,75,76,77,78,79)
+# Infant IDs which are seizure free.
+ns.IDs <- c(3,10,18,27,28,29,30,32,35,37,42,45,48,49,53,55,57,58,59,60,70,72)
+
+# If you are working with a directory structure as shown above, do not change this variable. 
+dir = "../"
+```
+
+**5. Load required functions**
+
+Finally you can load a script with all required R functions.  This script contains all the functions we have written that are required to perform the analyzes discussed in the article. These functions are: 
+`select_seizure_chunks()`, `generate_montage()`, `generate_samples()`, `generate_eeg_waveforms()`, `read_channel_names()`, `generate_selected_waveforms()`, `read_signal_lengths()`. Below, we execute the `read_signal_lengths()` function whose task is to read the lengths of all raw EDF signals.
+
+```{r}
+source("EEG_neonatal_FUNS.R")
+```
+
+```{r, label = '!!! Long-running chunk #1. Wait a few minutes to complete !!!'}
+time_elapsed <- system.time({
+  
+read_signal_lengths(1:79, dir)
+  
+})
+```
+
+```{r echo = FALSE}
+min <- time_elapsed[3] %/% 60
+sec <- round(time_elapsed[3] %% 60, 0)
+cat("Execution time: ", min,  "min ", sec, "sec", sep = "")
+```
+
+# Generate required HDF5 files
+
+**1. Introductory notes**
+
+To do this run `EEG_neonatal.R` script (this can take a few hour). Make sure that the current working directory is `R`. Set also the `dir` variable to the one indicating the appropriate directory structure in your local computer. The parameters of the `generate_samples()` function can be changed depending on your actual needs. Those that are saved in the `EEG_neonatal.R` script will generate exactly the same HDF5 files that were included in the Electronic Supplements. 
+
+After generating, the HDF5 files will be safed in the `working\inputs` directory (along with a couple of diagnostic files that are not directly used in the subsequent calculations). The directory should contain 90 HDF5 data files ready to fed to the neural network and additionally 184 auxiliary/diagnostic files. The data files have the same logical structure as in Figure 8 and use a uniform naming convention. For example, the file `expert_C_5sec_2chunk_64Hz.hdf5` means that data was generated according the annotations made by expert `C`, the windows size was set to `5` seconds and the number of contiguous chunks was set to `2` (see Figures 4 and 5). 
+
+The similar naming convention is used for all other files in the `working` subdirectories.
+ 
+Note: we do not put HDF5 files in the regular Electronic Supplements, as their total size is about 16.6GB. However, for your convenience, we included them in separate zip archives, see *Data and code availability* Section in the paper.
+
+**2. Test run**
+
+For testing purposes first let's try to read and display one annotation file (the first 20 line).
+
+```{r}
+options(width = 999)
+
+ann <-
+  read.csv(
+    paste(dir, "annotations/", "annotations_2017_A_fixed.csv", sep = ""),
+    sep = ",",
+    header = TRUE,
+    stringsAsFactors = F,
+    check.names = FALSE,
+    encoding = 'UTF-8')
+
+head(ann, 20)
+```
+
+The total number of rows in `annotations_2017_A_fixed.csv` file is `r nrow(ann)`.
+
+For another test try to generate only one HDF5 file (`expert_A_1sec_1chunk_64Hz.hdf5`). Additionally, also 3 TXT files will be generated (`SEIZURE_A_1sec_1chunk_64Hz.txt`, `NON.SEIZURE_A_1sec_1chunk_64Hz.txt` and `expert_A_1sec_1chunk_64Hz.txt`). We generate TXT files for illustrative purposes only. As for the content, they are fully compatible with the HDF5 binary file. If TXT files are not needed, simply set `write.txt.files = FALSE`.
+
+```{r, label = 'Long-running chunk #2. !!! Wait a few minutes to complete !!!'}
+options(width = 999)
+
+time_elapsed <- system.time({
+
+out <-  generate_samples(
+   which.expert = "A",
+   annotations_file = "annotations_2017_A_fixed.csv",
+   seizure.IDs = s.IDs,
+   non.seizure.IDs = ns.IDs,
+   window = 1,
+   chunks = 1,
+   down.sampling.factor = 4,
+   preprocessing = FALSE,
+   dir = dir,
+   random = FALSE,
+   write.txt.files = FALSE,
+   write.hdf5.files = TRUE
+)
+
+})
+```
+
+```{r echo = FALSE}
+min <- time_elapsed[3] %/% 60
+sec <- round(time_elapsed[3] %% 60, 0)
+cat("Execution time: ", min,  "min ", sec, "sec", sep = "")
+```
+
+**3. Generating a complete set of HDF5 files used in the paper**
+
+Please note that this is a very time-consuming operation (several hours). Uncomment the codes below when you are ready to do these calculations.  When the files generation is complete, there should be 90 HDF5 files and 184 auxiliary text files in the `working \ inputs` directory.
+
+
+```{r, label = 'Long-running chunk #3. !!! Be patient. This may take a long time !!!'}
+options(width = 999)
+
+time_elapsed <- system.time({
+  
+# for (i in 1:3) { 
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 1, chunks = 1, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 1, chunks = 2, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 1, chunks = 5, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 1, chunks = 10, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 1, chunks = 20, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 2, chunks = 1, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 2, chunks = 2, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 2, chunks = 5, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 2, chunks = 10, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 2, chunks = 20, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 5, chunks = 1, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 5, chunks = 2, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 5, chunks = 5, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 5, chunks = 10, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 5, chunks = 20, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+# 
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 10, chunks = 1, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 10, chunks = 2, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 10, chunks = 5, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 10, chunks = 10, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 10, chunks = 20, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+# 
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 20, chunks = 1, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 20, chunks = 2, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 20, chunks = 5, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 20, chunks = 10, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 20, chunks = 20, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+# 
+#   # We set chunks = 10000 and this way we are sure that the maximum possible set of chunks will be selected. 
+#   # Our dataset simply doesn't have seizures as long as 10,000 seconds.  
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 1, chunks = 10000, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 2, chunks = 10000, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 5, chunks = 10000, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 10, chunks = 10000, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+#   out <-  generate_samples(which.expert = we[i], annotations_file = ann.f[i], seizure.IDs = s.IDs, non.seizure.IDs = ns.IDs, window = 20, chunks = 10000, down.sampling.factor = 4, preprocessing = FALSE, dir = dir, random = FALSE, write.txt.files = FALSE, write.hdf5.files = TRUE)
+# }
+
+})
+```
+
+```{r echo = FALSE}
+min <- time_elapsed[3] %/% 60
+sec <- round(time_elapsed[3] %% 60, 0)
+cat("Execution time: ", min,  "min ", sec, "sec", sep = "")
+```
+
+**4. Notes**
+
+Infant numbers stored in the variables `s.IDs` and `ns.IDs` can of course be freely changed, depending on the current needs. For the purposes of this article, we have adopted the rule that we collect positive training samples (i.e. EEG chunks with seizures) only from infants where all 3 experts have annotated at least one seizure. On the other hand, we collect negative training samples (e.g. EEG chunks which are seizure free) from infants where no expert has annotated any seizure. 
+
+Looking at Table 7 we can see that 17 neonates had a seizure annotated by only 1 or 2 expert. In fact, EEG recordings of there infants have been excluded from our research as less certain/unambiguous data. However, nothing prevents from trying to use them in your further analysis.  
+
+# Generating EEG waveforms based on raw EDF recordings and annotations files
+
+According to Tables 7 and 8 (see the paper) there are 1379 seizure recordings in total annotated by 3 independent experts.  To facilitate their more detailed analysis, a dedicated function has been prepared that allows one to visualize all the EEG waveforms. In the below example, the parameter `window = 10` was set, which causes that waveforms with a length of 10 seconds each are generated. One example waveform is shown below. It presents an EEG waveform seizure annotated by expert A for infant number 1 (see the first column in `annotations_2017_A_fixed.csv` file and the first row in Tables 7 and 8.). The presented seizure is 18 seconds long (starts at second 104 and ends at second 121). All 1379 EEG waveforms are saved in the `working\waveforms` directory  as  `png` files (you can also generate files in `pdf` format, to do this one needs to set the `format = "pdf"` parameter). The file name is `seizures_expert_A_pat1_no1_win10_len18_from104_to121_64Hz.png`, its individual fragments mean:
+
+* `seizures_expert_A` - a seizure annotated by expert A
+* `pat1` - patient (infant) number 1
+* `no1` - the sequential number of the epileptic seizure. For infant number 1 and expert A there are 25 annotated seizures in total (see Tables 7 and 8)
+* `win10` - the length of EEG waveform presented in the plot
+* `len18` - the length of epileptic seizure as annotated by expert (see Table 8)
+* `from104` - the annotated seizure begins at 104th second
+* `to121` - the annotated seizure ends at 121st second
+* `64Hz` - the resulting frequency after down sampling
+
+To regenerate all the 1379 plots uncomment the below codes.
+
+```{r, label = 'Long-running chunk #4. !!! Wait a few minutes to complete !!!'}
+# infant IDs where 1 or 2 experts annotated seizures, expert A
+s12A.IDs <- c(2,8,23,33,54,68)
+
+# infant IDs where 1 or 2 experts annotated seizures, expert B
+s12B.IDs <- c(8,24,64,68,74)
+
+# infant IDs where 1 or 2 experts annotated seizures, expert C
+s12C.IDs <- c(6,12,23,26,33,43,46,54,56,61,64,65,74)
+
+time_elapsed <- system.time({
+  
+# p.ID <- c(s.IDs, s12A.IDs)
+# generate_eeg_waveforms(
+#   mode = "seizure",
+#   which.expert = we[1],
+#   annotations.file = ann.f[1],
+#   patient.IDs = p.ID,
+#   window = 10,
+#   down.sampling.factor = 4,
+#   non.seizures.chunks = 10,
+#   preprocessing = FALSE,
+#   random = FALSE,
+#   format = "png",
+#   save.to.file = TRUE,
+#   dir = dir
+# )
+# 
+# p.ID <- c(s.IDs, s12B.IDs)
+# generate_eeg_waveforms(
+#   mode = "seizure",
+#   which.expert = we[2],
+#   annotations.file = ann.f[2],
+#   patient.IDs = p.ID,
+#   window = 10,
+#   down.sampling.factor = 4,
+#   non.seizures.chunks = 10,
+#   preprocessing = FALSE,
+#   random = FALSE,
+#   format = "png",
+#   save.to.file = TRUE,
+#   dir = dir
+# )
+# 
+# p.ID <- c(s.IDs, s12C.IDs)
+# generate_eeg_waveforms(
+#   mode = "seizure",
+#   which.expert = we[3],
+#   annotations.file = ann.f[3],
+#   patient.IDs = p.ID,
+#   window = 10,
+#   down.sampling.factor = 4,
+#   non.seizures.chunks = 10,
+#   preprocessing = FALSE,
+#   random = FALSE,
+#   format = "png",
+#   save.to.file = TRUE,
+#   dir = dir
+# )
+  
+})
+```
+
+```{r echo = FALSE}
+min <- time_elapsed[3] %/% 60
+sec <- round(time_elapsed[3] %% 60, 0)
+cat("Execution time: ", min,  "min ", sec, "sec", sep = "")
+```
+
+In addition to waveform files, additional files with detailed seizure data for each patient are generated. For example, for patient number `1` and expert `A`, we have a file `expert_A_pat1_64Hz.csv`.
+
+```{r}
+out = read.csv(
+  '../working/waveforms/expert_A_pat1_64Hz.csv', 
+  sep = "\t", 
+  blank.lines.skip = FALSE
+)
+out[is.na(out)] <- ""
+print(out, row.names = FALSE, na.print = "" , quote = FALSE)
+```
+
+From this file we know that expert `A` annotated 25 seizures. The corresponding EEG waveforms are written in the following files:
+
+```{r echo = FALSE}
+ff <- list.files('../working/waveforms', pattern = "seizures_expert_A_pat1_")
+for (i in 1:length(ff)) 
+  cat(ff[i], "\n")
+```
+
+One selected `png` file is presented below.
+
+
+```{r fig.width = 10, fig.height = 8}
+img <- readPNG("../working/waveforms/seizures_expert_A_pat1_no1_win10_len18_from104_to121_64Hz.png")
+grid::grid.raster(img)
+```
+
+Using the function `read_selected_waveforms()`, it is possible to precisely select only the fragments of interest from raw EDF files. 
+
+```{r fig.width = 10, fig.height = 2.3}
+range <- c(104, 114)
+patient <- 1
+channel <- 1
+
+out <- generate_selected_waveforms(
+  patient = patient,
+  down.sampling.factor = 4,
+  channel = channel,
+  sec.range = range,
+  preprocessing = FALSE,
+  dir
+)
+
+plot(out$points, type = "l", xlab = "", ylab = "", yaxt = "n", xaxt = "n", main = paste ("Patient #", patient))
+ticks <- seq(1, length(out$points), length.out = 2)
+axis(1, at = ticks, labels = seq(range[1], range[2], length.out = 2), main = "a")
+mtext(text = out$channel.names, las = 1, adj = 0, cex = 1, side = 2, outer = FALSE, line = 3)
+```
+Setting `chanel = 1` you specify the channel number you want to display. Channel names can be displayed with the `get_chanel_names()` function. The names saved in the raw EDF files are shown as well as the names after the so called *montage* procedure. 
+
+
+```{r}
+out <- read_channel_names(1)
+
+# in EDF file
+out$sig.names.in.edf.file
+
+# after montage
+out$sig.names.after.montage
+```
+
+# Building a new CNN model (or models) based on completely new datasets
+
+In this section, we show some tests to help you determine if your EDF files and a seizure description file are correct for our R codes. In the `R\test_files` directory we placed 2 anonymous  raw EDF files and a sample annotations file where 4 seizures have been marked. 
+
+**Read the sample CSV annotations file and display its beginning**
+```{r}
+ann <-
+  read.csv(
+    paste("test_files/sample_annotations.csv", sep = ""),
+    sep = ",",
+    header = TRUE,
+    stringsAsFactors = F,
+    check.names = FALSE,
+    encoding = 'UTF-8'
+  )
+head(ann, 25)
+```
+
+**Try to read two sample EDF files. A short summary report is generated**
+
+```{r}
+IDs <- c(1, 2)
+
+for (i in IDs) {
+  filename <- paste("test_files/eeg", i, ".edf", sep = "")
+  edf <- read.edf(filename = filename, read.annotations = FALSE, header.only = FALSE)
+
+  n.sigs <- edf[["header.global"]][["n.signals"]]
+  f.edf <- edf[["header.signal"]][[1]][["n.samples"]]
+  len <- length(edf$signal[[1]]$data)
+  # in seconds
+  len.secs <- len/f.edf
+
+  sig.names <- NaN
+  for (s in 1:n.sigs) {
+    sig.names[s] <- edf$header.signal[[s]]$label  
+  }
+  sig.names
+  
+  cat("\nEDF file: ", filename,  "\n", sep = "")
+  cat (
+    "  number of signals: ", n.sigs, "\n",
+    "  base frequency: ", f.edf, "\n",
+    "  number of samples: ", len, "\n",
+    "  length in secs: ", len.secs, "\n",
+    sep = "")
+  cat ("  signal names: ", "\n", sep = "")
+  print(sig.names)
+}
+```
+
+**Read annotations data and display a simple summary**
+
+Patient # `1` has `2` annotations. The first seizure is `10s` long, starts at `10th` second and ends at `19th` second. The second seizure is `20s` long, starts at `100th` second and ends at `119th` second. 
+
+Patient # `2` has also `2` annotations entered. The first seizure is `5s` long, starts at `900th` second and ends at `904th` second. The second seizure is `10s` long, starts as `952nd` second and ends at `961st` second. 
+
+```{r}
+for (k in IDs) {
+  filename <- paste(dir, "edf/eeg", k, ".edf", sep = "")
+  cat("EDF file: ", filename,  "\n", sep = "")
+  out <- select_seizure_chunks(data = ann, f.edf, k) 
+  print(out)
+}
+```
+
+**A problem detected**
+
+A closer inspection of the EDF files showed that the last channel (`EDF_Annotations`) is a bit weird. It contains much less samples and basically only a few dozen unique values have been entered there. 
+Moreover, the frequency is set to 27. Surely, this channel should be excluded from the analysis. The plot confirms the oddity of the data.
+
+```{r fig.width = 10, fig.height = 6}
+filename
+edf[["header.signal"]][["EDF_Annotations"]][["n.samples"]]
+length(edf$signal[["EDF_Annotations"]]$data)
+unique(edf[["signal"]][["EDF_Annotations"]][["data"]])
+plot(edf[["signal"]][["EDF_Annotations"]][["data"]], pch = 16, cex = 0.5, ylab = "")
+```
+
+# Classification of new data using CNN already trained by us
+
+**An important note**: you must be aware that our CNN network has been trained on a certain dataset (quite specific) and is ready to recognize a certain type of seizures (i.e. neonatals ones). Therefore, it should not be expected that when we provide completely different data to the pre-trained CNN network (e.g. based on elderly patients), the network will correctly classify the data. Also some technical details on EEG recordings must be considered carefully. In our case, signals from 18 EEG channels connected according to the 'double banana' montage were fed to the CNN network. When the new data is not analogous, the classification results can be very questionable. Nevertheless, when the new data is compatible (in the sense as stated above), there are no major contraindications to feed them to our pre-trained CNN network. 
+
+As a new dataset, i.e. one that was not used to build and train the CNN network, we will use EEG signals from neonates where there was no consensus between experts. 17 neonates had a seizure annotated by only 1 or 2 experts (infants No. `2`, `6`, `8`, `12`, `23`, `24`, `26`, `33`, `43`, `46`, `54`, `56`, `61`, `64`, `65`, `68`, `74`). Due to the ambiguity in the expert opinion this subset was excluded from the process of building CNNs. 
+
+For classification task we choose the infants where expert C annotated at least 1 seizure (infants No. `6`, `12`, `23`, `26`, `33`, `43`, `46`, `54`, `56`, `61`, `64`, `65`, `74` ), see Table 7 in the paper. 
+
+To avoid a conflict with the filenames (see `working\inputs` directory), the expert was marked `CC` instead of `C`. 
+
+```{r, label = 'Long-running chunk #5. !!! Wait a few minutes to complete !!!'}
+time_elapsed <- system.time({
+
+out <-
+  generate_samples(
+    which.expert = "CC",
+    annotations_file = ann.f[3],
+    seizure.IDs = s12C.IDs,
+    non.seizure.IDs = ns.IDs,
+    window = 10,
+    chunks = 20,
+    down.sampling.factor = 4,
+    preprocessing = FALSE,
+    dir = dir,
+    random = FALSE,
+    write.txt.files = FALSE,
+    write.hdf5.files = TRUE
+  )
+
+})
+```
+
+```{r echo = FALSE}
+min <- time_elapsed[3] %/% 60
+sec <- round(time_elapsed[3] %% 60, 0)
+cat("Execution time: ", min,  "min ", sec, "sec", sep = "")
+```
+
+The following files have been created:
+
+```{r echo = FALSE}
+ff <- list.files('../working/inputs', pattern = "CC")
+for (i in 1:length(ff)) 
+  cat(ff[i], "\n")
+```
+
+The classification process is carried out in Python, see the Python Jupyter notebook included in the Electronic Supplements. 
