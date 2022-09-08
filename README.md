@@ -15,7 +15,7 @@ A complete repository consists of:
 Download the repository and save all the files on your local or cloud-based disk. Remember not to change the directory structure as this is hard-coded in the R and Python codes. The HDF5 files generated in Step 5 (see ‘Replication of the results’ Section) are very large, as much as about 17GB. Therefore these files have been made available in separate zip archives. As it can be cumbersome to download a file that is 17GB in size, 15 smaller files were prepared. They are available for download at the links given in `working/inputs/__read_me__.txt`. Download these files and load them to the `working/inputs/` directory.
 
 Then start by:
-1. Reading a short tutorial in `R/Tutorial_on_how_to_run_R_codes.html`
+1. Reading a short tutorial in [R/Tutorial_on_how_to_run_R_codes.html](https://github.com/artur-gramacki/Epileptic-Seizure-Detection/blob/main/Tutorial_on_how_to_run_R_codes.pdf)
 2. Become familiar with the contents of the [Python/EEG_neonatal.ipynb](https://github.com/artur-gramacki/Epileptic-Seizure-Detection/blob/main/EEG_neonatal.ipynb) Jupyter notebook. 
 
 Notes:
